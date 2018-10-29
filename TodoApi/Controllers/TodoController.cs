@@ -1,46 +1,84 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+using TodoApi.Models;
 
 namespace TodoApi.Controllers
 {
-    [Route("api/[controller]")]
-    public class TodoController : Controller
+    [Route("api/todo")]
+    [ApiController]
+    public class TodoController : ControllerBase
     {
-        // GET: api/<controller>
+        private readonly TodoContext _context;
+
+        public TodoController(TodoContext context)
+        {
+            _context = context;
+
+            if (_context.TodoItems.Count() == 0)
+            {
+                // Create a new TodoItem if collection is empty,
+                // which means you can't delete all TodoItems.
+                _context.TodoItems.Add(new TodoItem { Name = "Item1" });
+                _context.SaveChanges();
+            }
+        }
+
         [HttpGet]
-        public IEnumerable<string> Get()
+        public ActionResult<List<TodoItem>> GetAll()
         {
-            return new string[] { "value1", "value2" };
+            return _context.TodoItems.ToList();
         }
 
-        // GET api/<controller>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet("{id}", Name = "GetTodo")]
+        public ActionResult<TodoItem> GetById(long id)
         {
-            return "value";
+            var item = _context.TodoItems.Find(id);
+            if (item == null)
+            {
+                return NotFound();
+            }
+            return item;
         }
 
-        // POST api/<controller>
         [HttpPost]
-        public void Post([FromBody]string value)
+        public IActionResult Create(TodoItem item)
         {
+            _context.TodoItems.Add(item);
+            _context.SaveChanges();
+
+            return CreatedAtRoute("GetTodo", new { id = item.Id }, item);
         }
 
-        // PUT api/<controller>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
+        public IActionResult Update(long id, TodoItem item)
         {
+            var todo = _context.TodoItems.Find(id);
+            if (todo == null)
+            {
+                return NotFound();
+            }
+
+            todo.IsComplete = item.IsComplete;
+            todo.Name = item.Name;
+
+            _context.TodoItems.Update(todo);
+            _context.SaveChanges();
+            return NoContent();
         }
 
-        // DELETE api/<controller>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public IActionResult Delete(long id)
         {
+            var todo = _context.TodoItems.Find(id);
+            if (todo == null)
+            {
+                return NotFound();
+            }
+
+            _context.TodoItems.Remove(todo);
+            _context.SaveChanges();
+            return NoContent();
         }
     }
 }
