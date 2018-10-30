@@ -1,0 +1,17 @@
+﻿@model TodoApi.Models.Student
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h2>Edit</h2>
+<form action="Update" method="post">
+    <input type="hidden" name="id" value="@Model.Id" />
+    <div>
+        Username<input name="name" value="@Model.Name" />
+        <div>
+            RollNumber<input name="rollNumber" value="@Model.RollNumber" />
+            <div>
+                <input type="submit" value="Submit" />
+                <input type="reset" value="Reset" />
+            </div>
+</form>
